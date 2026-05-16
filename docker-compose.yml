@@ -1,0 +1,48 @@
+services:
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .                  
+      dockerfile: ./apps/api/Dockerfile
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongodb
+      - redis
+    environment:
+      MONGO_URL: mongodb://mongodb:27017/sheetflow
+      REDIS_URL: redis://redis:6379
+
+  worker:
+    build:
+      context: .                  
+      dockerfile: ./apps/worker/Dockerfile
+    depends_on:
+      - mongodb
+      - redis
+    environment:
+      MONGO_URL: mongodb://mongodb:27017/sheetflow
+      REDIS_URL: redis://redis:6379
+
+  web:
+    build:
+      context: .                  
+      dockerfile: ./apps/web/Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+volumes:
+  mongo_data:
